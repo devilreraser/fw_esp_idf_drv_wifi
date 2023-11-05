@@ -1,3 +1,71 @@
-menu "Component template Configuration"
+menu "Component drv_wifi Configuration"
 
+    config DRV_WIFI_USE
+        bool "Use Wifi"
+        default y
+        help
+            Use Wifi module.
+
+    config DRV_WIFI_SSID_STA
+        string "WiFi SSID Station"
+        depends on DRV_WIFI_USE
+        # default "dlink-4584"
+        default "DimitarLilov"
+        help
+            SSID (network name) for the Router (AccessPoint) to connect to.
+
+    config DRV_WIFI_PASS_STA
+        string "WiFi Password Station"
+        depends on DRV_WIFI_USE
+        default "megadeth440426"
+        help
+            WiFi password (WPA or WPA2) for the Router (AccessPoint).
+    
+    config DRV_WIFI_SSID_AP
+        string "WiFi SSID Soft-AP"
+        depends on DRV_WIFI_USE
+        default "ENDPOINT"
+        help
+            SSID (network name) for the soft-AP.
+
+    config DRV_WIFI_PASS_AP
+        string "WiFi Password Soft-AP"
+        depends on DRV_WIFI_USE
+        default "12345678"
+        help
+            WiFi password (WPA or WPA2) for the soft-AP.
+
+    config DRV_WIFI_AP_MAX_STA_CONN
+        int "Max Connected Stations in AP mode"
+        depends on DRV_WIFI_USE
+        default 4
+        help
+            Set the Maximum count stations connected to the Soft-AP.
+
+    choice DRV_WIFI_SCAN_AUTH_MODE_THRESHOLD
+        prompt "WiFi Scan auth mode threshold"
+        depends on DRV_WIFI_USE
+        default DRV_WIFI_AUTH_OPEN
+        help
+            The weakest authmode to accept in the scan mode.
+
+        config DRV_WIFI_AUTH_OPEN
+            bool "OPEN"
+        config DRV_WIFI_AUTH_WEP
+            bool "WEP"
+        config DRV_WIFI_AUTH_WPA_PSK
+            bool "WPA PSK"
+        config DRV_WIFI_AUTH_WPA2_PSK
+            bool "WPA2 PSK"
+        config DRV_WIFI_AUTH_WPA_WPA2_PSK
+            bool "WPA/WPA2 PSK"
+        config DRV_WIFI_AUTH_WPA3_PSK
+            bool "WPA3 PSK"
+        config DRV_WIFI_AUTH_WPA2_WPA3_PSK
+            bool "WPA2/WPA3 PSK"
+        config DRV_WIFI_AUTH_WAPI_PSK
+            bool "WAPI PSK"
+    endchoice
+            
+    
 endmenu
