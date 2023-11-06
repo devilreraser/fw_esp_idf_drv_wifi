@@ -33,6 +33,7 @@
 #include "lwip/ip4_addr.h"
 #include <netdb.h>
 
+#include "drv_nvs.h"
 
 
 /* *****************************************************************************
@@ -42,8 +43,7 @@
 
 #define CONFIG_DRV_ESPTOUCH_USE                     0   /* to do: make component drv_esptouch */
 #define CONFIG_APP_SOCKET_UDP_USE                   0   /* to do: make component app_socket_udp or relevant */
-#define CONFIG_USE_DRV_HTTP_USE                     0   /* to do: make components drv_http or remove */
-#define CONFIG_USE_DRV_NVS_USE                      0   /* to do: make component drv_nvs */
+#define CONFIG_DRV_HTTP_USE                         0   /* to do: make components drv_http or remove */
 
 #define USE_DRV_WIFI_DRV_ERT_COMBINED_SEMPHR_GOT_IP 0   /* to do: remove and combine got ip in parent module ex. named drv_network or drv_net */
 
@@ -125,7 +125,7 @@ uint8_t mac_wifi_ap[6];
 
 
 /* Station Configuration */
-#if CONFIG_USE_DRV_NVS_USE
+#if CONFIG_DRV_NVS_USE
 bool bSkipStaConfigSave = false;
 #endif
 
@@ -192,7 +192,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         ESP_LOGI(TAG, "Station Connected to %s. Total %d Station(s)", ssid_wifi_ap_fix, connected_stations);
         if (connected_stations == 1)
         {
-            #if CONFIG_USE_DRV_HTTP_USE
+            #if CONFIG_DRV_HTTP_USE
             drv_http_start();
             #endif
              //drv_esptouch_start();
@@ -214,7 +214,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
                 #if CONFIG_APP_SOCKET_UDP_USE
                 app_socket_udp_wifi_ap_bootp_set_deny_connect(true);
                 #endif
-                #if CONFIG_USE_DRV_HTTP_USE
+                #if CONFIG_DRV_HTTP_USE
                 drv_http_stop();
                 #endif
                 //drv_esptouch_disconnected();
@@ -362,7 +362,22 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
 }
 
-#if CONFIG_USE_DRV_NVS_USE  
+
+
+char* drv_wifi_get_ssid_sta( size_t* pnMaxSize)
+{
+    *pnMaxSize = sizeof(ssid_wifi_sta);
+    return ssid_wifi_sta;
+}
+char* drv_wifi_get_pass_sta(size_t* pnMaxSize)
+{
+    *pnMaxSize = sizeof(pass_wifi_sta);
+    return pass_wifi_sta;
+}
+
+
+
+#if CONFIG_DRV_NVS_USE  
 void drv_wifi_save_config(void)
 {
     
@@ -379,6 +394,53 @@ void drv_wifi_save_config(void)
             ESP_LOGE(TAG, "Error Data Wrte to NVS ip info of wifi station");
         }
 
+    }
+}
+
+
+esp_err_t nvs_write_ssid_sta(char* pString)
+{
+    esp_err_t eError;
+    eError = drv_nvs_write_string("app_cfg", "ssid_sta", pString);
+    return eError;
+}
+
+esp_err_t nvs_read_ssid_sta(char* pString, size_t nMaxSize)
+{
+    esp_err_t eError;
+    eError = drv_nvs_read_string("app_cfg", "ssid_sta", pString, nMaxSize);
+    return eError;
+}
+
+void drv_wifi_load_config(void)
+{
+    /* get ssid_sta and pass_sta */
+    size_t ssid_size = 0;
+    char* ssid_sta = drv_wifi_get_ssid_sta(&ssid_size);             /* here get the pointer to the ssid in drv_wifi module */
+    nvs_read_ssid_sta(ssid_sta, ssid_size);                     /* nvs -> drv_wifi memory */
+    size_t pass_size = 0;
+    char* pass_sta = drv_wifi_get_pass_sta(&pass_size);             /* here get the pointer to the pass in drv_wifi module */
+    drv_nvs_read_string("app_cfg","pass_sta", pass_sta, pass_size); /* nvs -> drv_wifi memory */
+
+    /* get ip_info sta */
+    dhcp_sta = 1;
+    ip_sta = inet_addr(ip_sta_def);
+    mask_sta = inet_addr(mask_sta_def);
+    gw_sta = inet_addr(gw_sta_def);
+
+    int err_sta = 0;    
+    if (drv_nvs_read_u32("app_cfg","dhcp_sta", &dhcp_sta)) err_sta++;
+    if (drv_nvs_read_u32("app_cfg","ip_sta", &ip_sta)) err_sta++;
+    if (drv_nvs_read_u32("app_cfg","mask_sta", &mask_sta)) err_sta++;
+    if (drv_nvs_read_u32("app_cfg","gw_sta", &gw_sta)) err_sta++;
+
+    if ((err_sta != 0) && (err_sta != 4))
+    {
+        ESP_LOGE(TAG, "Error Partial Data Read from NVS");
+        dhcp_sta = 1;
+        ip_sta = inet_addr("192.168.0.234");
+        mask_sta = inet_addr("255.255.255.0");
+        gw_sta = inet_addr("192.168.0.1");
     }
 }
 #endif
@@ -451,7 +513,7 @@ void drv_wifi_set_static_ip(esp_netif_t *netif, const char *ip_address, const ch
             ip_sta = ip_info.ip.addr;
             mask_sta = ip_info.netmask.addr;
             gw_sta = ip_info.gw.addr;
-            #if CONFIG_USE_DRV_NVS_USE 
+            #if CONFIG_DRV_NVS_USE 
             drv_wifi_save_config();
             #endif
         }
@@ -489,7 +551,7 @@ void drv_wifi_set_dynamic_ip(esp_netif_t *netif)
         ip_sta = ip_info.ip.addr;
         mask_sta = ip_info.netmask.addr;
         gw_sta = ip_info.gw.addr;
-        #if CONFIG_USE_DRV_NVS_USE
+        #if CONFIG_DRV_NVS_USE
         drv_wifi_save_config();
         #endif
     }
@@ -504,6 +566,11 @@ esp_netif_t* drv_wifi_get_netif_sta(void)
 
 void drv_wifi_init(void)
 {
+    #if CONFIG_DRV_NVS_USE
+    drv_wifi_load_config();
+    #endif
+
+
     flag_wifi_got_ip = xSemaphoreCreateBinary(); 
 
     #if USE_DRV_WIFI_DRV_ERT_COMBINED_SEMPHR_GOT_IP
@@ -618,7 +685,7 @@ void drv_wifi_init(void)
     esp_netif_get_dns_info(esp_netif_ap,ESP_NETIF_DNS_FALLBACK, &dns_info_ap);
     ESP_LOGI(TAG, "DNS FALLEN Soft-AP: " IPSTR, IP2STR(&dns_info_ap.ip.u_addr.ip4));
 
-    #if CONFIG_USE_DRV_NVS_USE
+    #if CONFIG_DRV_NVS_USE
     bSkipStaConfigSave = true;
     #endif
     /* update load configuration */
@@ -641,7 +708,7 @@ void drv_wifi_init(void)
         drv_wifi_set_static_ip(drv_wifi_get_netif_sta(), ip_address, ip_netmask, ip_gateway, true);
         ESP_LOGI(TAG, "Wifi Station Static IP Used");
     }
-    #if CONFIG_USE_DRV_NVS_USE
+    #if CONFIG_DRV_NVS_USE
     bSkipStaConfigSave = false;
     #endif
 
@@ -683,4 +750,62 @@ void drv_wifi_init(void)
 
 
 }
+
+void drv_wifi_print_rssi(void)
+{
+    wifi_ap_record_t ap_info;
+    if (bStationConnecting == true)
+    {
+        esp_wifi_sta_get_ap_info(&ap_info);
+        ESP_LOGI(TAG, "Wifi rssi: %d", ap_info.rssi);
+    }
+}
+
+void drv_wifi_sta_ssid_pass_set(char* ssid, char* pass, bool bssid_set, uint8_t* bssid)
+{
+    wifi_config_t wifi_config;
+    bzero(&wifi_config, sizeof(wifi_config_t));
+    if (ssid != NULL)
+    {
+        memcpy(wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+    }
+    if (pass != NULL)
+    {
+        memcpy(wifi_config.sta.password, pass, sizeof(wifi_config.sta.password));
+    }
+    wifi_config.sta.bssid_set = bssid_set;
+    if (wifi_config.sta.bssid_set == true) 
+    {
+        memcpy(wifi_config.sta.bssid, bssid, sizeof(wifi_config.sta.bssid));
+    }
+
+    ESP_ERROR_CHECK( esp_wifi_disconnect() );
+    #if CONFIG_APP_SOCKET_UDP_USE
+    app_socket_udp_wifi_sta_bootp_set_deny_connect(true);
+    #endif
+    ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+
+    ESP_LOGI(TAG, "try connect on drv_wifi_sta_ssid_pass_set");
+    ESP_LOGI(TAG, "stopping smart config (esptouch)");
+    #if CONFIG_DRV_ESPTOUCH_USE
+    drv_esptouch_done();
+    #endif
+    ESP_LOGI(TAG, "try reconnect to AP now");
+
+    wifi_connect();
+
+    /* set ssid_sta and pass_sta */
+    size_t ssid_size = 0;
+    char* ssid_sta = drv_wifi_get_ssid_sta(&ssid_size);
+    if (ssid != NULL) strcpy(ssid_sta, ssid); else ssid_sta[0] = '\0';
+    nvs_write_ssid_sta(ssid_sta);
+    size_t pass_size = 0;
+    char* pass_sta = drv_wifi_get_pass_sta(&pass_size);
+    if (pass != NULL) strcpy(pass_sta, pass); else pass_sta[0] = '\0';
+    drv_nvs_write_string("app_cfg","pass_sta", pass_sta);
+}
+
+
+
+
 

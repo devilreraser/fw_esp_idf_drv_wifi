@@ -18,6 +18,8 @@ extern "C"
 /* *****************************************************************************
  * Header Includes
  **************************************************************************** */
+#include <stdbool.h>
+#include <stdint.h>
     
 /* *****************************************************************************
  * Configuration Definitions
@@ -47,6 +49,9 @@ extern "C"
  * Function Prototypes
  **************************************************************************** */
 void drv_wifi_init(void);
+void drv_wifi_print_rssi(void);
+void drv_wifi_sta_ssid_pass_set(char* ssid, char* pass, bool bssid_set, uint8_t* bssid);
+
 
 
 
