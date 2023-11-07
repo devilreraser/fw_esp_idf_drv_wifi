@@ -33,8 +33,9 @@
 #include "lwip/ip4_addr.h"
 #include <netdb.h>
 
+#if CONFIG_DRV_NVS_USE
 #include "drv_nvs.h"
-
+#endif
 
 /* *****************************************************************************
  * Configuration Definitions
