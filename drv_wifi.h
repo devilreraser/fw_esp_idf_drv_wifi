@@ -54,6 +54,7 @@ void drv_wifi_set_dynamic_ip(esp_netif_t *netif);
 void drv_wifi_reconnect(void);
 esp_netif_t* drv_wifi_get_netif_sta(void);
 esp_netif_t* drv_wifi_get_netif_ap(void);
+bool drv_wifi_get_ap_connected(void);
 bool drv_wifi_get_sta_connected(void);
 void drv_wifi_init(void);
 void drv_wifi_print_rssi(void);

@@ -1,7 +1,7 @@
 menu "Component drv_wifi Configuration"
 
     config DRV_WIFI_USE
-        bool "Use Wifi"
+        bool "Use Wifi component"
         default y
         help
             Use Wifi module.

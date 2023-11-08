@@ -600,6 +600,11 @@ esp_netif_t* drv_wifi_get_netif_ap(void)
     return esp_netif_ap;
 }
 
+bool drv_wifi_get_ap_connected(void)
+{
+    return (connected_stations > 0);
+}
+
 bool drv_wifi_get_sta_connected(void)
 {
     return bStationConnected;
