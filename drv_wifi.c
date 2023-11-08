@@ -12,6 +12,7 @@
  * Header Includes
  **************************************************************************** */
 #include "drv_wifi.h"
+#include "cmd_wifi.h"
 
 #include <sdkconfig.h>
 
@@ -186,7 +187,7 @@ static void wifi_connect(void)
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
-{
+{             
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED) 
     {
         connected_stations++;
@@ -357,8 +358,14 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
     }
     else
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_START) 
     {
-        ESP_LOGE(TAG, "Unknown Wifi Event: event_base: %d event_id:%d", (int)event_base, (int)event_id);
+        /**< ESP32 soft-AP start */
+        ESP_LOGI(TAG, "Soft-AP Started");
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Unknown Wifi Event: event_base: 0x%08X event_id:%d", (int)event_base, (int)event_id);
     }
 
 }
@@ -558,15 +565,53 @@ void drv_wifi_set_dynamic_ip(esp_netif_t *netif)
     }
 }
 
+void drv_wifi_reconnect(void)
+{
+
+    if (bStationConnecting == false)
+    {
+        s_reconnect_timeout++;
+        ESP_LOGW(TAG, "reconnect timeout the AP %d", s_reconnect_timeout);
+        if (s_reconnect_timeout > 120)
+        {
+            ESP_LOGI(TAG, "reconnect timeout the AP elapsed");
+            #if CONFIG_DRV_ESPTOUCH_USE
+            ESP_LOGI(TAG, "stopping smart config (esptouch)");
+            drv_esptouch_done();
+            #endif
+            ESP_LOGI(TAG, "retry reconnect to AP now");
+            wifi_connect();
+            s_reconnect_timeout = 0;
+        }
+    }
+    else
+    {
+        s_reconnect_timeout = 0;
+    }
+}
+
 esp_netif_t* drv_wifi_get_netif_sta(void)
 {
     return esp_netif_sta;
+}
+
+esp_netif_t* drv_wifi_get_netif_ap(void)
+{
+    return esp_netif_ap;
+}
+
+bool drv_wifi_get_sta_connected(void)
+{
+    return bStationConnected;
 }
 
 
 
 void drv_wifi_init(void)
 {
+
+    cmd_wifi_register();
+
     #if CONFIG_DRV_NVS_USE
     drv_wifi_load_config();
     #endif
@@ -787,8 +832,8 @@ void drv_wifi_sta_ssid_pass_set(char* ssid, char* pass, bool bssid_set, uint8_t*
     ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
 
     ESP_LOGI(TAG, "try connect on drv_wifi_sta_ssid_pass_set");
-    ESP_LOGI(TAG, "stopping smart config (esptouch)");
     #if CONFIG_DRV_ESPTOUCH_USE
+    ESP_LOGI(TAG, "stopping smart config (esptouch)");
     drv_esptouch_done();
     #endif
     ESP_LOGI(TAG, "try reconnect to AP now");

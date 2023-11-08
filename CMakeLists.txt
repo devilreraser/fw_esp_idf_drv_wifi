@@ -9,7 +9,7 @@ if(EXISTS "${project_dir}/components/drv_nvs")
     list(APPEND conditionally_required_components "drv_nvs")
 endif()
 
-idf_component_register(SRCS "drv_wifi.c" 
+idf_component_register(SRCS "drv_wifi.c" "cmd_wifi.c"
                     INCLUDE_DIRS "." 
                     REQUIRES 
                         ${conditionally_required_components}
