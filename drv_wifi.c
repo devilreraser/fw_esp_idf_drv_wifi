@@ -38,14 +38,21 @@
 #include "drv_nvs.h"
 #endif
 
+#if CONFIG_DRV_HTTP_USE
+#include "drv_http.h"
+#endif
+
+#if CONFIG_DRV_ESPTOUCH_USE
+#include "drv_esptouch.h"
+#endif
+#if CONFIG_APP_SOCKET_UDP_USE
+#include "app_socket_udp.h"
+#endif
+
 /* *****************************************************************************
  * Configuration Definitions
  **************************************************************************** */
 #define TAG "drv_wifi"
-
-#define CONFIG_DRV_ESPTOUCH_USE                     0   /* to do: make component drv_esptouch */
-#define CONFIG_APP_SOCKET_UDP_USE                   0   /* to do: make component app_socket_udp or relevant */
-#define CONFIG_DRV_HTTP_USE                         0   /* to do: make components drv_http or remove */
 
 #define USE_DRV_WIFI_DRV_ERT_COMBINED_SEMPHR_GOT_IP 0   /* to do: remove and combine got ip in parent module ex. named drv_network or drv_net */
 

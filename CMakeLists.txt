@@ -12,6 +12,18 @@ if(EXISTS "${project_dir}/components/lib_iperf")
     list(APPEND conditionally_required_components "lib_iperf")
 endif()
 
+if(EXISTS "${project_dir}/components/drv_esptouch")
+    list(APPEND conditionally_required_components "drv_esptouch")
+endif()
+
+if(EXISTS "${project_dir}/components/drv_http")
+    list(APPEND conditionally_required_components "drv_http")
+endif()
+
+if(EXISTS "${project_dir}/components/app_socket_udp")
+    list(APPEND conditionally_required_components "app_socket_udp")
+endif()
+
 idf_component_register(SRCS "drv_wifi.c" "cmd_wifi.c"
                     INCLUDE_DIRS "." 
                     REQUIRES 
