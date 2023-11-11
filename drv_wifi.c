@@ -565,6 +565,12 @@ void drv_wifi_set_dynamic_ip(esp_netif_t *netif)
     }
 }
 
+uint32_t drv_wifi_get_ip_sta(void)
+{
+    return ip_sta;
+}
+
+
 void drv_wifi_reconnect(void)
 {
 

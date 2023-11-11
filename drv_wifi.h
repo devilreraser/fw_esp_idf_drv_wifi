@@ -51,6 +51,7 @@ extern "C"
  **************************************************************************** */
 void drv_wifi_set_static_ip(esp_netif_t *netif, const char *ip_address, const char *ip_netmask, const char *gw_address, bool bSkipSave);
 void drv_wifi_set_dynamic_ip(esp_netif_t *netif);
+uint32_t drv_wifi_get_ip_sta(void);
 void drv_wifi_reconnect(void);
 esp_netif_t* drv_wifi_get_netif_sta(void);
 esp_netif_t* drv_wifi_get_netif_ap(void);

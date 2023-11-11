@@ -24,7 +24,7 @@
 #include "esp_wifi.h"
 #include "esp_netif.h"
 
-#if CONFIG_DRV_IPERF_USE
+#if CONFIG_LIB_IPERF_USE
 #include "iperf.h"  /* to do create component drv_iperf on base of iperf component in enpoint project */
 #endif
 
@@ -74,7 +74,7 @@ char null_string_wifi[] = "";
 
 
 
-#if CONFIG_DRV_IPERF_USE
+#if CONFIG_LIB_IPERF_USE
 typedef struct {
     struct arg_str *ip;
     struct arg_lit *server;
@@ -407,7 +407,7 @@ static int wifi_cmd_query(int argc, char **argv)
 //     return ip_info.ip.addr;
 // }
 
-#if CONFIG_DRV_IPERF_USE
+#if CONFIG_LIB_IPERF_USE
 static int wifi_cmd_iperf(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **) &iperf_args);
@@ -597,7 +597,7 @@ static void register_wifi(void)
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&query_cmd) );
 
-#if CONFIG_DRV_IPERF_USE
+#if CONFIG_LIB_IPERF_USE
     iperf_args.ip = arg_str0("c", "client", "<ip>", "run in client mode, connecting to <host>");
     iperf_args.server = arg_lit0("s", "server", "run in server mode");
     iperf_args.udp = arg_lit0("u", "udp", "use UDP rather than TCP");
